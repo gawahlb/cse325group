@@ -1,0 +1,97 @@
+@page "/products/update/{productID:int}"
+@using InventoryManagement.Services
+@using InventoryManagement.Models
+@inject ProductService productService
+@inject NavigationManager NavigationManager
+@inject TempDataService TempData
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Manager")]
+
+@* @if (isSuccess)
+{
+<p>The product "@product.ProductName" was updated successfully!</p>
+} *@
+
+<h3>Viewing @product.ProductName</h3>
+
+<EditForm Model="product" OnValidSubmit="HandleSubmit" FormName="editProductForm">
+  <DataAnnotationsValidator />
+  <div class="container">
+    <div class="form-group">
+      <label for="ProductName">Product Name</label>
+      <InputText class="form-control" id="ProductName" @bind-Value="product.ProductName"></InputText>
+    </div>
+    <div class="form-group">
+      <label for="Price">Price</label>
+      <InputNumber class="form-control" id="Price" @bind-Value="product.Price" step="0.01" min="0"></InputNumber>
+    </div>
+    <div class="form-group">
+      <label for="Quantity">Quantity</label>
+      <InputNumber class="form-control" id="Quantity" @bind-Value="product.Quantity" min="0"></InputNumber>
+    </div>
+    <div class="form-group">
+      <InputCheckbox class="form-check-input" id="Discontinued" @bind-Value="product.Discontinued"></InputCheckbox>
+      <label class="form-check-label" for="Discontinued">Discontinued</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Update Product</button>
+  </div>
+</EditForm>
+<div>
+  <button type="button" class="btn btn-danger" @onclick="Dele">Delete</button>
+</div>
+
+@code {
+  [Parameter]
+  public int ProductID { get; set; }
+  [SupplyParameterFromForm]
+  public Product? product { get; set; }
+  private bool isSuccess = false;
+  private bool isDele = false;
+  private string? tempMessage;
+
+  public async Task Dele()
+  {
+
+    await productService.DeleteProductAsync(ProductID);
+    isDele = true;
+
+    if (isDele)
+    {
+      var message = $"The Product '{product?.ProductName}' was succesfully deteled!!!";
+      TempData.SetTempData(message);
+      NavigationManager.NavigateTo($"/products");
+    }
+  }
+  protected override async Task OnInitializedAsync()
+  {
+    if (product == null)
+    {
+      product = await productService.GetProductByIdAsync(ProductID);
+    }
+  }
+
+  public async Task HandleSubmit(EditContext editContext)
+  {
+    try
+    {
+      var newProduct = (Product)editContext.Model;
+      newProduct.ProductID = ProductID;
+      await productService.UpdateProductAsync(newProduct);
+      isSuccess = true;
+      if (isSuccess)
+      {
+        var message = $"The product '{product?.ProductName}' was succesfully updated!!!";
+        TempData.SetTempData(message);
+        NavigationManager.NavigateTo($"/products");
+      }
+      NavigationManager.NavigateTo($"/products");
+    }
+    catch (Exception)
+    {
+      // Handle the exception, e.g., log it or display an error message.
+      // For now, rethrowing the exception.
+      throw;
+    }
+  }
+}

@@ -1,0 +1,58 @@
+<!-- CreateProduct.razor -->
+@page "/products/create"
+@using InventoryManagement.Models
+@using InventoryManagement.Services
+@inject ProductService ProductService
+@inject NavigationManager NavigationManager
+@inject TempDataService TempData
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Manager")]
+
+<h3>Create a new product</h3>
+
+<EditForm Model="product" OnValidSubmit="HandleSubmit" FormName="productForm">
+  <DataAnnotationsValidator />
+  <div class="container">
+    <div class="form-group">
+      <label for="ProductName">Product Name</label>
+      <InputText class="form-control" id="ProductName" @bind-Value="product.ProductName"></InputText>
+    </div>
+    <div class="form-group">
+      <label for="Price">Price</label>
+      <InputNumber class="form-control" id="Price" @bind-Value="product.Price" step="0.01" min="0"></InputNumber>
+    </div>
+    <div class="form-group">
+      <label for="Quantity">Quantity</label>
+      <InputNumber class="form-control" id="Quantity" @bind-Value="product.Quantity" min="0"></InputNumber>
+    </div>
+    <div class="form-check">
+      <InputCheckbox class="form-check-input" id="Discontinued" @bind-Value="product.Discontinued"></InputCheckbox>
+      <label class="form-check-label" for="Discontinued">Discontinued</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Create Product</button>
+  </div>
+</EditForm>
+@code {
+  [SupplyParameterFromForm]
+  public Product? product { get; set; }
+  protected override void OnInitialized() => product ??= new();
+  private bool isSuccess = false;
+
+  public void HandleSubmit(EditContext editContext)
+  {
+    var newProduct = (Product)editContext.Model;
+    newProduct.CreatedDate = DateTime.Now;
+
+    ProductService?.AddProduct(newProduct);
+    isSuccess = true;
+
+    if (isSuccess)
+    {
+      var message = $"The product '{product?.ProductName}' was succesfully created!!!";
+      TempData.SetTempData(message);
+      NavigationManager.NavigateTo($"/products");
+    }
+
+  }
+}

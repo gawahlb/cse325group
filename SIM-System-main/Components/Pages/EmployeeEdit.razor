@@ -1,0 +1,105 @@
+@page "/employees/edit/{employeeId:int}"
+@using InventoryManagement.Models
+@using InventoryManagement.Services
+@inject EmployeeService EmployeeService
+@inject NavigationManager NavigationManager
+@inject TempDataService TempData;
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Manager")]
+
+<h3>Viewing @employee.FirstName @employee.LastName</h3>
+
+<EditForm Model="employee" OnValidSubmit="HandleSubmit" FormName="editEmployeeForm">
+  <DataAnnotationsValidator />
+  <div class="container">
+    <div class="form-group">
+      <label for="FirstName">First Name</label>
+      <InputText class="form-control" id="FirstName" @bind-Value="employee.FirstName"></InputText>
+    </div>
+    <div class="form-group">
+      <label for="LastName">Last Name</label>
+      <InputText class="form-control" id="LastName" @bind-Value="employee.LastName"></InputText>
+    </div>
+    <div class="form-group">
+      <label>Position</label>
+      <InputRadioGroup @bind-Value="employee.Position" class="form-control">
+        @foreach (var position in Enum.GetValues<Position>())
+        {
+          <div class="form-check">
+            <InputRadio class="form-check-input" Value="@position" />
+            <label class="form-check-label" for="@($"position-{position}")">@position.ToString()</label>
+          </div>
+        }
+      </InputRadioGroup>
+    </div>
+    <div class="form-group">
+      <label for="Username">Username</label>
+      <InputText class="form-control" id="Username" @bind-Value="employee.Username"></InputText>
+    </div>
+    <div class="form-group">
+      <label for="Password">Password</label>
+      <InputText type="password" class="form-control" id="Password" @bind-Value="employee.Password"></InputText>
+    </div>
+    <button type="submit" class="btn btn-primary">Edit Employee</button>
+  </div>
+</EditForm>
+<div>
+  <button type="button" class="btn btn-danger" @onclick="Dele">Delete</button>
+</div>
+
+@* @if (isDele)
+{
+<p>Deleted successfully</p>
+} *@
+@code {
+  [Parameter]
+  public int employeeId { get; set; }
+  [SupplyParameterFromForm]
+  public Employee? employee { get; set; }
+  protected override async void OnInitialized()
+  {
+    if (employee == null)
+    {
+      employee = await EmployeeService.GetEmployeetByIdAsync(employeeId);
+    }
+  }
+  private bool isSuccess = false;
+  private bool isDele = false;
+
+  public async Task Dele()
+  {
+
+    await EmployeeService.DeleteEmployee(employeeId);
+    isDele = true;
+
+    if (isDele)
+    {
+      var message = $"The Employee '{employee?.FirstName} {employee?.LastName}' was succesfully deteled!!!";
+      TempData.SetTempData(message);
+      NavigationManager.NavigateTo($"/employees");
+    }
+  }
+
+  public async Task HandleSubmit(EditContext editContext)
+  {
+    try
+    {
+      var newEmployee = (Employee)editContext.Model;
+      newEmployee.EmployeeID = employeeId;
+
+      await EmployeeService.UpdateEmployee(newEmployee);
+      isSuccess = true;
+      if (isSuccess)
+      {
+        var message = $"The Employee '{employee?.FirstName} {employee?.LastName}' was succesfully updated!!!";
+        TempData.SetTempData(message);
+        NavigationManager.NavigateTo($"/employees");
+      }
+    }
+    catch
+    {
+      throw;
+    }
+  }
+}

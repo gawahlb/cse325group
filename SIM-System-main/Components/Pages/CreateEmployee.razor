@@ -1,0 +1,68 @@
+@page "/employees/create"
+@using InventoryManagement.Models
+@using InventoryManagement.Services
+@inject TempDataService TempData
+@inject NavigationManager NavigationManager
+@inject EmployeeService EmployeeService
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Manager")]
+
+<h3>Add a new employee</h3>
+<EditForm Model="employee" OnValidSubmit="HandleSubmit" FormName="employeeForm">
+  <DataAnnotationsValidator />
+  <div class="container">
+    <div class="form-group">
+      <label for="FirstName">First Name</label>
+      <InputText class="form-control" id="FirstName" @bind-Value="employee.FirstName"></InputText>
+    </div>
+    <div class="form-group">
+      <label for="LastName">Last Name</label>
+      <InputText class="form-control" id="LastName" @bind-Value="employee.LastName"></InputText>
+    </div>
+    <div class="form-group">
+      <label>Position</label>
+      <InputRadioGroup @bind-Value="employee.Position" class="form-control">
+        @foreach (var position in Enum.GetValues<Position>())
+        {
+          <div class="form-check">
+            <InputRadio class="form-check-input" Value="@position" />
+            <label class="form-check-label" for="@($"position-{position}")">@position.ToString()</label>
+          </div>
+        }
+      </InputRadioGroup>
+    </div>
+    <div class="form-group">
+      <label for="Username">Username</label>
+      <InputText class="form-control" id="Username" @bind-Value="employee.Username"></InputText>
+    </div>
+    <div class="form-group">
+      <label for="Password">Password</label>
+      <InputText class="form-control" id="Password" type="password" @bind-Value="employee.Password"></InputText>
+    </div>
+    <button type="submit" class="btn btn-primary">Add Employee</button>
+  </div>
+</EditForm>
+
+@code {
+  [SupplyParameterFromForm]
+  public Employee? employee { get; set; }
+  protected override void OnInitialized() => employee ??= new();
+  private bool isSuccess = false;
+
+  public void HandleSubmit(EditContext editContext)
+  {
+    var newEmployee = (Employee)editContext.Model;
+    newEmployee.CreatedDate = DateTime.Now;
+
+    EmployeeService?.AddEmployee(newEmployee);
+    isSuccess = true;
+
+    if (isSuccess)
+    {
+      var message = $"The Employee '{employee?.FirstName} {employee?.LastName}' was succesfully added!!!";
+      TempData.SetTempData(message);
+      NavigationManager.NavigateTo($"/employees");
+    }
+  }
+}

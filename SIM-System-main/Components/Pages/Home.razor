@@ -1,0 +1,38 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<div class="row">
+  <div class="col-12">
+    <h1>Welcome to our Inventory Management System!</h1>
+
+    <p>At our store, we pride ourselves on efficiency and organization. Our system is designed to seamlessly manage our
+      inventory, ensuring that every item is accounted for and easily accessible.</p>
+    <p>As a manager, you have full control over the inventory. You can add new items, update their information or
+      quantity,
+      adjust prices, and remove outdated products. With these capabilities, you can ensure that our inventory is always
+      up-to-date and reflects the needs of our customers.</p>
+    <p>For our dedicated employees, our system provides read-only access. You'll have the ability to search and filter
+      through our database, allowing you to quickly find the information you need to assist our customers effectively.
+      While
+      you won't be able to directly modify the database, your access will still play a crucial role in maintaining our
+      efficient operations.</p>
+    <p>Together, we'll keep our inventory organized, our customers satisfied, and our business running smoothly.
+      <strong>Welcome to
+        our Inventory Management System, where organization meets efficiency!</strong>
+    </p>
+    @* Login/logout message *@
+    <div class="card">
+      <div class="card-body">
+        <AuthorizeView>
+          <NotAuthorized>
+            <span>You are not logged in. Please <a href="/login">click here</a> to login.</span>
+          </NotAuthorized>
+          <Authorized>
+            <span>Logged in as <b>@context.User.Identity.Name</b>. <a href="/logout">click here</a> to logout.</span>
+          </Authorized>
+        </AuthorizeView>
+      </div>
+    </div>
+  </div>
+</div>

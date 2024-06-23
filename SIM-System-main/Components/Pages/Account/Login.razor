@@ -1,0 +1,71 @@
+@page "/login";
+@using InventoryManagement.Models
+@using InventoryManagement.Services
+@inject EmployeeService EmployeeService
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@inject NavigationManager NavigationManager
+
+<div class="row">
+  <div class="col-lg-4 offset-lg-4 pt-4 pb-4 border">
+    <div class="mb-3 text-center flex-column">
+      <h3>Login</h3>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person"
+        viewBox="0 0 16 16">
+        <path
+          d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" />
+      </svg>
+    </div>
+    <EditForm Model="employee" OnInvalidSubmit="Authenticate" FormName="LoginForm">
+      <DataAnnotationsValidator />
+      <div class="form-group mb-3">
+        <label for="Username">Username</label>
+        <InputText class="form-control" id="Username" @bind-Value="employee.Username"></InputText>
+        <ValidationMessage For="() => employee.Username" />
+      </div>
+      <div class="form-group mb-3">
+        <label for="Password">Password</label>
+        <InputText class="form-control" id="Password" type="password" @bind-Value="employee.Password"></InputText>
+        <ValidationMessage For="() => employee.Password" />
+      </div>
+      <div class="mb-3 text-center">
+        <span class="text-danger">@errorMessage</span>
+      </div>
+      <div class="mb-3 d-grid gap-2">
+        <button type="submit" class="btn btn-primary">Login</button>
+      </div>
+    </EditForm>
+  </div>
+</div>
+
+@code
+{
+  [CascadingParameter]
+  public HttpContext? HttpContext { get; set; }
+  [SupplyParameterFromForm]
+  public Employee? employee { get; set; }
+  protected override void OnInitialized() => employee ??= new();
+  private bool isSuccess = false;
+  private string? errorMessage;
+  private async Task Authenticate(EditContext editContext)
+  {
+    var userAccount = (Employee)editContext.Model;
+    Employee? userAuthenticated = EmployeeService.GetEmployeeByUserName(userAccount);
+    if (userAuthenticated is null || userAuthenticated.Password != employee?.Password)
+    {
+      errorMessage = "Invalid User Name or Password";
+      return;
+    }
+    isSuccess = true;
+    var claims = new List<Claim>
+{
+new Claim(ClaimTypes.Name, employee.Username),
+new Claim(ClaimTypes.Role, userAuthenticated.Position.ToString())
+};
+    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+    var principal = new ClaimsPrincipal(identity);
+    await HttpContext.SignInAsync(principal);
+    NavigationManager.NavigateTo("/");
+  }
+}
